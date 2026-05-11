@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luz Neon Party</title>
   <style>
     body {
@@ -10,85 +10,80 @@
       height: 100vh;
       background: black;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      transition: background 0.1s;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .container {
-      text-align: center;
-      z-index: 10;
+      font-family: Arial, sans-serif;
+      touch-action: manipulation;
     }
     h1 {
       color: white;
-      margin-bottom: 40px;
-      font-size: 2.5em;
-      text-shadow: 0 0 20px currentColor;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px #ff00ff;
     }
     .controls {
-      position: fixed;
-      bottom: 30px;
-      left: 0;
-      right: 0;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      padding: 0 20px;
+      position: absolute;
+      bottom: 40px;
+      width: 90%;
+      text-align: center;
     }
     button {
-      padding: 16px 24px;
-      font-size: 17px;
-      font-weight: bold;
+      padding: 15px 20px;
+      margin: 6px;
+      font-size: 16px;
       border: none;
       border-radius: 50px;
       color: white;
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      min-width: 140px;
+      background: rgba(255,255,255,0.1);
+      box-shadow: 0 0 15px rgba(255,0,255,0.5);
     }
     button:active {
       transform: scale(0.95);
     }
+    #stop {
+      background: #ff0000;
+    }
     .info {
-      position: fixed;
+      position: absolute;
       top: 20px;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.6);
       font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div class="info">Toque nos botões abaixo ↓</div>
-  <div class="container">
-    <h1 id="title">NEON PARTY</h1>
-  </div>
+  <div class="info">Toque na tela para flash rápido</div>
+  <h1>Luz Neon Party</h1>
 
   <div class="controls">
-    <button onclick="strobe()">⚡ STROBE</button>
-    <button onclick="rainbow()">🌈 ARCO-ÍRIS</button>
-    <button onclick="neon()">💖 NEON PULSE</button>
-    <button onclick="randomFlash()">🎲 FLASH ALEATÓRIO</button>
-    <button onclick="lanterna()">🔦 LANTERNA</button>
-    <button onclick="stopAll()">⏹ PARAR</button>
+    <button onclick="strobe()">⚡ Strobe Rápido</button>
+    <button onclick="rainbow()">🌈 Arco-íris</button>
+    <button onclick="neonPulse()">💖 Neon Pulse</button>
+    <button onclick="police()">🚨 Police Lights</button>
+    <button onclick="randomFlash()">🎲 Aleatório</button>
+    <button onclick="lanterna()">🔦 Lanterna Full</button>
+    <button id="stop" onclick="stopAll()">⛔ Parar Tudo</button>
   </div>
 
   <script>
-    let interval;
-    let audioContext;
+    let interval = null;
+    let wakeLock = null;
 
     function changeColor(color) {
       document.body.style.background = color;
-      document.getElementById('title').style.color = color === 'black' ? 'white' : '#fff';
+    }
+
+    function stopAll() {
+      clearInterval(interval);
+      document.body.style.background = "black";
     }
 
     function strobe() {
       stopAll();
       let on = true;
       interval = setInterval(() => {
-        document.body.style.background = on ? '#ffffff' : '#000000';
+        document.body.style.background = on ? "#ffffff" : "#000000";
         on = !on;
       }, 40);
     }
@@ -97,15 +92,14 @@
       stopAll();
       let hue = 0;
       interval = setInterval(() => {
-        hue = (hue + 6) % 360;
-        const color = `hsl(${hue}, 100%, 55%)`;
-        document.body.style.background = color;
+        hue = (hue + 4) % 360;
+        document.body.style.background = `hsl(${hue}, 100%, 50%)`;
       }, 25);
     }
 
-    function neon() {
+    function neonPulse() {
       stopAll();
-      let colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0088', '#00ff88'];
+      let colors = ["#ff00ff", "#00ffff", "#ffff00", "#ff0088"];
       let i = 0;
       interval = setInterval(() => {
         changeColor(colors[i]);
@@ -113,46 +107,43 @@
       }, 180);
     }
 
-    function randomFlash() {
+    function police() {
       stopAll();
+      let on = true;
       interval = setInterval(() => {
-        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-        document.body.style.background = randomColor;
+        document.body.style.background = on ? "#ff0000" : "#0000ff";
+        on = !on;
       }, 80);
     }
 
-    function stopAll() {
-      if (interval) clearInterval(interval);
-      document.body.style.background = 'black';
+    function randomFlash() {
+      stopAll();
+      interval = setInterval(() => {
+        const r = Math.floor(Math.random() * 255);
+        const g = Math.floor(Math.random() * 255);
+        const b = Math.floor(Math.random() * 255);
+        document.body.style.background = `rgb(\( {r}, \){g},${b})`;
+      }, 60);
     }
 
     function lanterna() {
       stopAll();
-      if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').then(() => {
-          alert('🔦 Modo lanterna ativado! Gire o brilho no máximo.');
-        });
-      }
+      document.body.style.background = "#ffffff";
       document.documentElement.requestFullscreen().catch(() => {});
-      alert('🔦 Tela cheia + brilho máximo = lanterna!');
+      
+      // Tenta manter a tela ligada
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(lock => wakeLock = lock);
+      }
     }
 
-    // Toque na tela para flash rápido
-    document.body.addEventListener('click', (e) => {
-      if (e.target.tagName !== 'BUTTON') {
-        const flash = document.createElement('div');
-        flash.style.position = 'fixed';
-        flash.style.top = '0';
-        flash.style.left = '0';
-        flash.style.width = '100%';
-        flash.style.height = '100%';
-        flash.style.background = 'white';
-        flash.style.opacity = '0.8';
-        flash.style.transition = 'opacity 0.1s';
-        document.body.appendChild(flash);
-        setTimeout(() => flash.style.opacity = '0', 50);
-        setTimeout(() => flash.remove(), 200);
-      }
+    // Flash rápido ao tocar na tela
+    document.body.addEventListener('touchstart', () => {
+      const original = document.body.style.background;
+      document.body.style.background = "#ffffff";
+      setTimeout(() => {
+        document.body.style.background = original || "black";
+      }, 80);
     });
   </script>
 </body>
